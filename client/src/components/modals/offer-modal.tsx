@@ -109,7 +109,7 @@ export default function OfferModal({ open, onOpenChange, applicationId }: OfferM
                     <FormControl>
                       <Input 
                         type="date" 
-                        value={field.value instanceof Date ? field.value.toISOString().slice(0, 10) : field.value}
+                        value={field.value instanceof Date ? field.value.toISOString().slice(0, 10) : (field.value || "")}
                         onChange={(e) => field.onChange(new Date(e.target.value))}
                       />
                     </FormControl>
@@ -130,6 +130,7 @@ export default function OfferModal({ open, onOpenChange, applicationId }: OfferM
                       rows={5}
                       placeholder="Enter any additional terms, benefits, or conditions..."
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />

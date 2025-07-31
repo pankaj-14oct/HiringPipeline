@@ -108,7 +108,7 @@ export default function InterviewModal({ open, onOpenChange, applicationId }: In
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Interview Panel</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select panel" />
@@ -155,7 +155,8 @@ export default function InterviewModal({ open, onOpenChange, applicationId }: In
                     <Input 
                       type="number" 
                       {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      value={field.value || ""}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 60)}
                     />
                   </FormControl>
                   <FormMessage />

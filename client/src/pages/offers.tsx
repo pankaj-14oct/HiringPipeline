@@ -4,6 +4,7 @@ import { Search, Plus, FileText, Download, Send, Eye } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import OfferModal from "@/components/modals/offer-modal";
+import OfferViewModal from "@/components/modals/offer-view-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,6 +14,8 @@ import type { OfferLetter } from "@shared/schema";
 
 export default function Offers() {
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<OfferLetter | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: offers = [], isLoading } = useQuery<OfferLetter[]>({
@@ -44,6 +47,11 @@ export default function Offers() {
   const formatDate = (date: Date | string | null) => {
     if (!date) return "Not set";
     return new Date(date).toLocaleDateString();
+  };
+
+  const handleViewOffer = (offer: OfferLetter) => {
+    setSelectedOffer(offer);
+    setShowViewModal(true);
   };
 
   return (
@@ -151,7 +159,12 @@ export default function Offers() {
                           <TableCell className="text-gray-600">{formatDate(offer.respondedAt)}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm" title="View Offer">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="View Offer"
+                                onClick={() => handleViewOffer(offer)}
+                              >
                                 <Eye className="w-4 h-4" />
                               </Button>
                               <Button variant="ghost" size="sm" title="Download PDF">
@@ -176,6 +189,11 @@ export default function Offers() {
       </main>
 
       <OfferModal open={showOfferModal} onOpenChange={setShowOfferModal} />
+      <OfferViewModal 
+        open={showViewModal} 
+        onOpenChange={setShowViewModal}
+        offer={selectedOffer}
+      />
     </div>
   );
 }

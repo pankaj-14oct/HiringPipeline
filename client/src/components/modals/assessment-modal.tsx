@@ -101,6 +101,7 @@ export default function AssessmentModal({ open, onOpenChange }: AssessmentModalP
                       rows={3}
                       placeholder="Describe the assessment..."
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -138,7 +139,7 @@ export default function AssessmentModal({ open, onOpenChange }: AssessmentModalP
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Related Job</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select job" />
@@ -169,7 +170,8 @@ export default function AssessmentModal({ open, onOpenChange }: AssessmentModalP
                       <Input 
                         type="number" 
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 60)}
                       />
                     </FormControl>
                     <FormMessage />
@@ -189,7 +191,8 @@ export default function AssessmentModal({ open, onOpenChange }: AssessmentModalP
                         min="0" 
                         max="100" 
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 70)}
                       />
                     </FormControl>
                     <FormMessage />

@@ -4,6 +4,7 @@ import { Search, Plus, FileText, Clock, Target, Users } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import AssessmentModal from "@/components/modals/assessment-modal";
+import AssessmentViewModal from "@/components/modals/assessment-view-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,6 +16,8 @@ import type { Assessment } from "@shared/schema";
 
 export default function Assessments() {
   const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -69,6 +72,11 @@ export default function Assessments() {
     if (confirm("Are you sure you want to delete this assessment?")) {
       deleteAssessmentMutation.mutate(assessmentId);
     }
+  };
+
+  const handleViewAssessment = (assessment: Assessment) => {
+    setSelectedAssessment(assessment);
+    setShowViewModal(true);
   };
 
   return (
@@ -180,7 +188,7 @@ export default function Assessments() {
                               <span className="text-sm">0 submissions</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-gray-600">{formatDate(assessment.createdAt)}</TableCell>
+                          <TableCell className="text-gray-600">{assessment.createdAt ? formatDate(assessment.createdAt) : "Unknown"}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
                               <Button variant="ghost" size="sm" title="Edit">
@@ -188,7 +196,12 @@ export default function Assessments() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               </Button>
-                              <Button variant="ghost" size="sm" title="View">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="View"
+                                onClick={() => handleViewAssessment(assessment)}
+                              >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -219,6 +232,11 @@ export default function Assessments() {
       </main>
 
       <AssessmentModal open={showAssessmentModal} onOpenChange={setShowAssessmentModal} />
+      <AssessmentViewModal 
+        open={showViewModal} 
+        onOpenChange={setShowViewModal}
+        assessment={selectedAssessment}
+      />
     </div>
   );
 }

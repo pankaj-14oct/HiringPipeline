@@ -141,7 +141,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteJob(id: string): Promise<boolean> {
     const result = await db.delete(jobs).where(eq(jobs.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Candidates
@@ -224,7 +224,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInterviewPanel(id: string): Promise<boolean> {
     const result = await db.delete(interviewPanels).where(eq(interviewPanels.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Interviews
@@ -287,7 +287,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAssessment(id: string): Promise<boolean> {
     const result = await db.delete(assessments).where(eq(assessments.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   // Assessment Submissions

@@ -5,8 +5,19 @@ import { insertJobSchema, insertCandidateSchema, insertApplicationSchema,
          insertInterviewPanelSchema, insertInterviewSchema, insertAssessmentSchema, 
          insertAssessmentSubmissionSchema, insertOfferLetterSchema } from "@shared/schema";
 import { z } from "zod";
+import { seedDatabase } from "./seed-data";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Seed database route
+  app.post("/api/seed", async (req, res) => {
+    try {
+      await seedDatabase();
+      res.json({ message: "Database seeded successfully!" });
+    } catch (error) {
+      console.error("Error seeding database:", error);
+      res.status(500).json({ message: "Failed to seed database", error: error.message });
+    }
+  });
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res) => {
     try {

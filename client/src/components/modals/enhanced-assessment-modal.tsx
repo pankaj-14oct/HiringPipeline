@@ -61,7 +61,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
         difficulty: formData.difficulty,
         count: Math.min(formData.questionCount, 5) // Preview only 5 questions
       });
-      return response as QuestionBank[];
+      return response as unknown as QuestionBank[];
     },
     onSuccess: (data: QuestionBank[]) => {
       setPreviewQuestions(data);
@@ -105,50 +105,50 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
 
   // Initialize form with existing data
   useEffect(() => {
-    if (assessment && isOpen) {
-      setFormData({
-        title: assessment.title,
-        description: assessment.description || "",
-        type: assessment.type as string,
-        categories: Array.isArray(assessment.categories) ? assessment.categories : [],
-        difficulty: Array.isArray(assessment.difficulty) ? assessment.difficulty : ["easy", "medium", "hard"],
-        questionCount: assessment.questionCount || 20,
-        timeLimit: assessment.timeLimit || 60,
-        passingScore: assessment.passingScore || 70,
-        randomizeQuestions: assessment.randomizeQuestions ?? true,
-        shuffleOptions: assessment.shuffleOptions ?? true,
-        allowReview: assessment.allowReview ?? true,
-        showResults: assessment.showResults ?? true,
-        preventCheating: assessment.preventCheating ?? true,
-        jobId: assessment.jobId || "",
-        createdBy: assessment.createdBy
-      });
+    if (isOpen) {
+      if (assessment) {
+        setFormData({
+          title: assessment.title,
+          description: assessment.description || "",
+          type: assessment.type as string,
+          categories: Array.isArray(assessment.categories) ? assessment.categories : [],
+          difficulty: Array.isArray(assessment.difficulty) ? assessment.difficulty : ["easy", "medium", "hard"],
+          questionCount: assessment.questionCount || 20,
+          timeLimit: assessment.timeLimit || 60,
+          passingScore: assessment.passingScore || 70,
+          randomizeQuestions: assessment.randomizeQuestions ?? true,
+          shuffleOptions: assessment.shuffleOptions ?? true,
+          allowReview: assessment.allowReview ?? true,
+          showResults: assessment.showResults ?? true,
+          preventCheating: assessment.preventCheating ?? true,
+          jobId: assessment.jobId || "",
+          createdBy: assessment.createdBy
+        });
+      } else {
+        setFormData({
+          title: "",
+          description: "",
+          type: "auto",
+          categories: [],
+          difficulty: ["easy", "medium", "hard"],
+          questionCount: 20,
+          timeLimit: 60,
+          passingScore: 70,
+          randomizeQuestions: true,
+          shuffleOptions: true,
+          allowReview: true,
+          showResults: true,
+          preventCheating: true,
+          jobId: "",
+          createdBy: "user-1"
+        });
+        setPreviewQuestions([]);
+        setActiveTab("config");
+      }
     }
   }, [assessment, isOpen]);
 
-  const resetForm = () => {
-    if (!assessment) {
-      setFormData({
-        title: "",
-        description: "",
-        type: "auto",
-        categories: [],
-        difficulty: ["easy", "medium", "hard"],
-        questionCount: 20,
-        timeLimit: 60,
-        passingScore: 70,
-        randomizeQuestions: true,
-        shuffleOptions: true,
-        allowReview: true,
-        showResults: true,
-        preventCheating: true,
-        jobId: "",
-        createdBy: "user-1"
-      });
-      setPreviewQuestions([]);
-      setActiveTab("config");
-    }
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -449,7 +449,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
                               <ul className="mt-2 space-y-1">
                                 {(question.options as string[]).map((option, idx) => (
                                   <li key={idx} className="text-sm text-gray-600">
-                                    {String.fromCharCode(65 + idx)}. {String(option)}
+                                    {String.fromCharCode(65 + idx)}. {option}
                                   </li>
                                 ))}
                               </ul>

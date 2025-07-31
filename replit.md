@@ -113,3 +113,18 @@ The application is prepared for authentication with user roles (HR, recruiter, i
 - **Asset Handling**: Vite handles asset optimization and bundling
 
 The application follows modern web development practices with type safety, component reusability, and scalable architecture patterns.
+
+## Recent Changes (July 31, 2025)
+
+### Enhanced Candidate Profile Management
+- **Dynamic Skills Management**: Skills can now be added dynamically by typing and pressing comma or enter
+- **Skill Tags**: Skills display as removable badges with delete functionality
+- **Resume Upload**: Added file upload capability for PDF, DOC, DOCX, and TXT files
+- **Dual Resume Input**: Support for both file upload and manual text entry
+- **Improved UX**: Enhanced visual feedback and form validation
+- **TypeScript Fixes**: Resolved all form validation errors across modal components
+
+### View Functionality Enhancements
+- **Assessment Details**: Added comprehensive assessment view modal with question display
+- **Offer Letter Preview**: Added detailed offer view modal with timeline and preview
+- **User Interface**: Enhanced modal layouts with scroll areas and better organization

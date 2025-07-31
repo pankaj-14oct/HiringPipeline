@@ -64,7 +64,8 @@ export default function CandidatePortal() {
     }
   };
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = (date: Date | string | null) => {
+    if (!date) return "N/A";
     return new Date(date).toLocaleDateString();
   };
 

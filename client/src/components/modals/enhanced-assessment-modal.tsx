@@ -54,16 +54,25 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
 
   // Generate preview questions
   const [previewQuestions, setPreviewQuestions] = useState<QuestionBank[]>([]);
-  const generatePreviewMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest("POST", "/api/question-bank/generate-assessment", {
+  const generatePreviewMutation = useMutation<QuestionBank[], Error, void>({
+    mutationFn: async (): Promise<QuestionBank[]> => {
+      const response = await apiRequest("POST", "/api/question-bank/generate-assessment", {
         categories: formData.categories,
         difficulty: formData.difficulty,
         count: Math.min(formData.questionCount, 5) // Preview only 5 questions
       });
+      return response as QuestionBank[];
     },
     onSuccess: (data: QuestionBank[]) => {
       setPreviewQuestions(data);
+    },
+    onError: (error) => {
+      console.error("Failed to generate preview:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate question preview",
+        variant: "destructive",
+      });
     }
   });
 
@@ -96,7 +105,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
 
   // Initialize form with existing data
   useEffect(() => {
-    if (assessment) {
+    if (assessment && isOpen) {
       setFormData({
         title: assessment.title,
         description: assessment.description || "",
@@ -115,28 +124,30 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
         createdBy: assessment.createdBy
       });
     }
-  }, [assessment]);
+  }, [assessment, isOpen]);
 
   const resetForm = () => {
-    setFormData({
-      title: "",
-      description: "",
-      type: "auto",
-      categories: [],
-      difficulty: ["easy", "medium", "hard"],
-      questionCount: 20,
-      timeLimit: 60,
-      passingScore: 70,
-      randomizeQuestions: true,
-      shuffleOptions: true,
-      allowReview: true,
-      showResults: true,
-      preventCheating: true,
-      jobId: "",
-      createdBy: "user-1"
-    });
-    setPreviewQuestions([]);
-    setActiveTab("config");
+    if (!assessment) {
+      setFormData({
+        title: "",
+        description: "",
+        type: "auto",
+        categories: [],
+        difficulty: ["easy", "medium", "hard"],
+        questionCount: 20,
+        timeLimit: 60,
+        passingScore: 70,
+        randomizeQuestions: true,
+        shuffleOptions: true,
+        allowReview: true,
+        showResults: true,
+        preventCheating: true,
+        jobId: "",
+        createdBy: "user-1"
+      });
+      setPreviewQuestions([]);
+      setActiveTab("config");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -438,7 +449,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
                               <ul className="mt-2 space-y-1">
                                 {(question.options as string[]).map((option, idx) => (
                                   <li key={idx} className="text-sm text-gray-600">
-                                    {String.fromCharCode(65 + idx)}. {option}
+                                    {String.fromCharCode(65 + idx)}. {String(option)}
                                   </li>
                                 ))}
                               </ul>

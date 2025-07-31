@@ -178,8 +178,8 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b flex-shrink-0">
           <h2 className="text-xl font-semibold">
             {assessment ? 'Edit Assessment' : 'Create New Assessment'}
           </h2>
@@ -188,15 +188,15 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
-            <TabsList className="grid w-full grid-cols-3 mx-6 mt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+            <TabsList className="grid w-full grid-cols-3 mx-6 mt-4 flex-shrink-0">
               <TabsTrigger value="config">Configuration</TabsTrigger>
               <TabsTrigger value="questions">Question Bank</TabsTrigger>
               <TabsTrigger value="preview">Preview & Settings</TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-6 min-h-0">
               {/* Configuration Tab */}
               <TabsContent value="config" className="space-y-6">
                 <Card>
@@ -420,7 +420,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
                         <p className="mt-2 text-gray-600">Generating questions...</p>
                       </div>
                     ) : previewQuestions.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-4 max-h-96 overflow-y-auto">
                         {previewQuestions.map((question, index) => (
                           <div key={question.id} className="border rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-2">
@@ -462,7 +462,7 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
           </Tabs>
 
           {/* Footer */}
-          <div className="border-t p-6">
+          <div className="border-t p-6 flex-shrink-0">
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 {formData.categories.length > 0 && (

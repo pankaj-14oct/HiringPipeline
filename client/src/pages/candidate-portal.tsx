@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Calendar, FileText, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Search, Calendar, FileText, CheckCircle, Clock, AlertCircle, BookOpen, Play, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Job, Application } from "@shared/schema";
+import CandidateAssessmentInterface from "@/components/candidate-assessment-interface";
+import type { Job, Application, Assessment, AssessmentSubmission } from "@shared/schema";
 
 export default function CandidatePortal() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeAssessment, setActiveAssessment] = useState<{
+    assessmentId: string;
+    candidateId: string;
+    applicationId: string;
+  } | null>(null);
+
+  // Mock candidate ID - in real app this would come from authentication
+  const candidateId = "c2342dd7-70a4-4a9f-b8cf-a922e7f56609";
 
   const { data: jobs = [], isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
@@ -18,6 +27,14 @@ export default function CandidatePortal() {
 
   const { data: applications = [], isLoading: applicationsLoading } = useQuery<Application[]>({
     queryKey: ["/api/applications"],
+  });
+
+  const { data: assessments = [], isLoading: assessmentsLoading } = useQuery<Assessment[]>({
+    queryKey: ["/api/assessments"],
+  });
+
+  const { data: submissions = [], isLoading: submissionsLoading } = useQuery<AssessmentSubmission[]>({
+    queryKey: [`/api/assessment-submissions/candidate/${candidateId}`],
   });
 
   const filteredJobs = jobs.filter(job =>
@@ -104,9 +121,10 @@ export default function CandidatePortal() {
         </div>
 
         <Tabs defaultValue="jobs" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg">
             <TabsTrigger value="jobs">Available Jobs</TabsTrigger>
             <TabsTrigger value="applications">My Applications</TabsTrigger>
+            <TabsTrigger value="assessments">Assessments</TabsTrigger>
           </TabsList>
 
           <TabsContent value="jobs" className="space-y-6">
@@ -254,6 +272,235 @@ export default function CandidatePortal() {
                 ))
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="assessments" className="space-y-6">
+            {activeAssessment ? (
+              <CandidateAssessmentInterface
+                assessmentId={activeAssessment.assessmentId}
+                candidateId={activeAssessment.candidateId}
+                applicationId={activeAssessment.applicationId}
+                onComplete={(submission) => {
+                  console.log("Assessment completed:", submission);
+                  setActiveAssessment(null);
+                }}
+              />
+            ) : (
+              <div className="space-y-6">
+                {/* Available Assessments */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Assessments</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {assessmentsLoading ? (
+                      Array(2).fill(0).map((_, i) => (
+                        <Card key={i}>
+                          <CardContent className="p-6">
+                            <Skeleton className="h-32 w-full" />
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      assessments
+                        .filter(assessment => {
+                          // Find if candidate has applications that could take this assessment
+                          const candidateApplications = applications.filter(app => app.candidateId === candidateId);
+                          const hasEligibleApplication = candidateApplications.some(app => app.jobId === assessment.jobId);
+                          const alreadySubmitted = submissions.some(sub => sub.assessmentId === assessment.id);
+                          return hasEligibleApplication && !alreadySubmitted;
+                        })
+                        .map((assessment) => {
+                          const relevantApplication = applications.find(app => 
+                            app.candidateId === candidateId && app.jobId === assessment.jobId
+                          );
+                          
+                          return (
+                            <Card key={assessment.id} className="hover:shadow-md transition-shadow">
+                              <CardContent className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <BookOpen className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-semibold text-gray-900">{assessment.title}</h4>
+                                      <p className="text-sm text-gray-600">{assessment.type} Assessment</p>
+                                    </div>
+                                  </div>
+                                  <Badge className="bg-green-100 text-green-800">Available</Badge>
+                                </div>
+
+                                {assessment.description && (
+                                  <p className="text-sm text-gray-600 mb-4">{assessment.description}</p>
+                                )}
+
+                                <div className="space-y-3 mb-4">
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Questions:</span>
+                                    <span className="font-medium">{assessment.questionCount}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Time Limit:</span>
+                                    <span className="font-medium">{assessment.timeLimit} minutes</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Passing Score:</span>
+                                    <span className="font-medium">{assessment.passingScore}%</span>
+                                  </div>
+                                  {Array.isArray(assessment.categories) && assessment.categories.length > 0 && (
+                                    <div className="flex items-start justify-between text-sm">
+                                      <span className="text-gray-600">Categories:</span>
+                                      <div className="flex flex-wrap gap-1 max-w-32">
+                                        {assessment.categories.map((category, idx) => (
+                                          <Badge key={idx} variant="outline" className="text-xs">
+                                            {category}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                    <Clock className="w-4 h-4" />
+                                    <span>Complete by application deadline</span>
+                                  </div>
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => {
+                                      if (relevantApplication) {
+                                        setActiveAssessment({
+                                          assessmentId: assessment.id,
+                                          candidateId: candidateId,
+                                          applicationId: relevantApplication.id
+                                        });
+                                      }
+                                    }}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Play className="w-4 h-4" />
+                                    <span>Start Assessment</span>
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })
+                    )}
+                    
+                    {!assessmentsLoading && 
+                     assessments.filter(assessment => {
+                       const candidateApplications = applications.filter(app => app.candidateId === candidateId);
+                       const hasEligibleApplication = candidateApplications.some(app => app.jobId === assessment.jobId);
+                       const alreadySubmitted = submissions.some(sub => sub.assessmentId === assessment.id);
+                       return hasEligibleApplication && !alreadySubmitted;
+                     }).length === 0 && (
+                      <Card className="col-span-full">
+                        <CardContent className="text-center py-12">
+                          <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
+                            <BookOpen className="w-full h-full" />
+                          </div>
+                          <p className="text-gray-500 mb-2">No assessments available</p>
+                          <p className="text-sm text-gray-400">Apply to jobs to unlock technical assessments</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+
+                {/* Completed Assessments */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Completed Assessments</h3>
+                  <div className="space-y-4">
+                    {submissionsLoading ? (
+                      Array(2).fill(0).map((_, i) => (
+                        <Card key={i}>
+                          <CardContent className="p-6">
+                            <Skeleton className="h-20 w-full" />
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : submissions.length === 0 ? (
+                      <Card>
+                        <CardContent className="text-center py-8">
+                          <div className="w-12 h-12 mx-auto mb-3 text-gray-300">
+                            <Target className="w-full h-full" />
+                          </div>
+                          <p className="text-gray-500">No completed assessments yet</p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      submissions.map((submission) => {
+                        const assessment = assessments.find(a => a.id === submission.assessmentId);
+                        const scorePercentage = submission.score || 0;
+                        const passed = scorePercentage >= (assessment?.passingScore || 70);
+                        
+                        return (
+                          <Card key={submission.id}>
+                            <CardContent className="p-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                    passed ? 'bg-green-100' : 'bg-red-100'
+                                  }`}>
+                                    {passed ? (
+                                      <CheckCircle className="w-5 h-5 text-green-600" />
+                                    ) : (
+                                      <AlertCircle className="w-5 h-5 text-red-600" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <h4 className="font-semibold text-gray-900">
+                                      {assessment?.title || 'Assessment'}
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                      Completed {formatDate(submission.submittedAt)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className={`text-2xl font-bold ${
+                                    passed ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {scorePercentage}%
+                                  </div>
+                                  <Badge className={passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                    {passed ? 'Passed' : 'Failed'}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-600">Time Spent</p>
+                                  <p className="font-medium">
+                                    {submission.timeSpent ? `${Math.round(submission.timeSpent)} minutes` : 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-600">Questions</p>
+                                  <p className="font-medium">
+                                    {submission.selectedQuestions?.length || assessment?.questionCount || 'N/A'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-600">Status</p>
+                                  <p className="font-medium capitalize">{submission.status}</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-600">Required Score</p>
+                                  <p className="font-medium">{assessment?.passingScore || 70}%</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>

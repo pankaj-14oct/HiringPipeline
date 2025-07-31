@@ -431,6 +431,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Assessment submissions routes
+  app.get("/api/assessment-submissions/candidate/:candidateId", async (req, res) => {
+    try {
+      const submissions = await storage.getAssessmentSubmissionsByCandidate(req.params.candidateId);
+      res.json(submissions);
+    } catch (error) {
+      console.error("Error fetching candidate submissions:", error);
+      res.status(500).json({ message: "Failed to fetch candidate submissions" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

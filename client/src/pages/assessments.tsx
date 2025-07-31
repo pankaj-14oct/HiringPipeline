@@ -81,6 +81,11 @@ export default function Assessments() {
     setShowViewModal(true);
   };
 
+  const handleEditAssessment = (assessment: Assessment) => {
+    setSelectedAssessment(assessment);
+    setShowAssessmentModal(true);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -201,7 +206,12 @@ export default function Assessments() {
                           <TableCell className="text-gray-600">{assessment.createdAt ? formatDate(assessment.createdAt) : "Unknown"}</TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm" title="Edit">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="Edit"
+                                onClick={() => handleEditAssessment(assessment)}
+                              >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
@@ -244,8 +254,11 @@ export default function Assessments() {
       {useEnhancedModal ? (
         <EnhancedAssessmentModal 
           isOpen={showAssessmentModal} 
-          onClose={() => setShowAssessmentModal(false)}
-          assessment={selectedAssessment}
+          onClose={() => {
+            setShowAssessmentModal(false);
+            setSelectedAssessment(null);
+          }}
+          assessment={selectedAssessment || undefined}
         />
       ) : (
         <AssessmentModal open={showAssessmentModal} onOpenChange={setShowAssessmentModal} />

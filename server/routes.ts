@@ -282,6 +282,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/assessments/:id", async (req, res) => {
+    try {
+      const updates = insertAssessmentSchema.partial().parse(req.body);
+      const assessment = await storage.updateAssessment(req.params.id, updates);
+      if (!assessment) {
+        return res.status(404).json({ message: "Assessment not found" });
+      }
+      res.json(assessment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid assessment data", errors: error.errors });
+      } else {
+        console.error("Error updating assessment:", error);
+        res.status(500).json({ message: "Failed to update assessment" });
+      }
+    }
+  });
+
+  app.delete("/api/assessments/:id", async (req, res) => {
+    try {
+      await storage.deleteAssessment(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      res.status(500).json({ message: "Failed to delete assessment" });
+    }
+  });
+
   // Assessment Submissions routes
   app.post("/api/assessment-submissions", async (req, res) => {
     try {

@@ -283,6 +283,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(assessments).orderBy(desc(assessments.createdAt));
   }
 
+  async updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | undefined> {
+    const [assessment] = await db.update(assessments).set(updates).where(eq(assessments.id, id)).returning();
+    return assessment || undefined;
+  }
+
   async getAssessment(id: string): Promise<Assessment | undefined> {
     const [assessment] = await db.select().from(assessments).where(eq(assessments.id, id));
     return assessment || undefined;
@@ -290,11 +295,6 @@ export class DatabaseStorage implements IStorage {
 
   async getAssessmentsByJob(jobId: string): Promise<Assessment[]> {
     return await db.select().from(assessments).where(eq(assessments.jobId, jobId)).orderBy(desc(assessments.createdAt));
-  }
-
-  async updateAssessment(id: string, updates: Partial<InsertAssessment>): Promise<Assessment | undefined> {
-    const [assessment] = await db.update(assessments).set(updates).where(eq(assessments.id, id)).returning();
-    return assessment || undefined;
   }
 
   async deleteAssessment(id: string): Promise<boolean> {

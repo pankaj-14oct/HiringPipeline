@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search, Plus, Calendar, Clock, Users, VideoIcon } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
-import InterviewModal from "@/components/modals/interview-modal";
+import EnhancedInterviewModal from "@/components/modals/enhanced-interview-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -204,7 +204,7 @@ export default function Interviews() {
         </div>
       </main>
 
-      <InterviewModal open={showInterviewModal} onOpenChange={setShowInterviewModal} />
+      <EnhancedInterviewModal open={showInterviewModal} onOpenChange={setShowInterviewModal} />
     </div>
   );
 }

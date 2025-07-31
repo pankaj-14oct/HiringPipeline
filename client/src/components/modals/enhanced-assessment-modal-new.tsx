@@ -424,15 +424,15 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
                               <span className="text-sm text-gray-500">Question {index + 1}</span>
                             </div>
                             <p className="font-medium">{question.question}</p>
-                            {question.options && Array.isArray(question.options) && (
+                            {question.options && Array.isArray(question.options) && question.options.length > 0 ? (
                               <ul className="mt-2 space-y-1">
-                                {(question.options as string[]).map((option, idx) => (
+                                {question.options.map((option: any, idx: number) => (
                                   <li key={idx} className="text-sm text-gray-600">
-                                    {String.fromCharCode(65 + idx)}. {option}
+                                    {String.fromCharCode(65 + idx)}. {typeof option === 'string' ? option : JSON.stringify(option)}
                                   </li>
                                 ))}
                               </ul>
-                            )}
+                            ) : null}
                           </div>
                         ))}
                         <p className="text-sm text-gray-500 text-center">

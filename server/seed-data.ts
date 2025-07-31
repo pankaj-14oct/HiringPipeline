@@ -535,3 +535,8 @@ export async function seedDatabase() {
     throw error;
   }
 }
+
+// Execute the seed function if this script is run directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedDatabase().catch(console.error);
+}

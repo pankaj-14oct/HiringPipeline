@@ -4,6 +4,7 @@ import { Search, Plus, FileText, Clock, Target, Users } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import AssessmentModal from "@/components/modals/assessment-modal";
+import EnhancedAssessmentModal from "@/components/modals/enhanced-assessment-modal";
 import AssessmentViewModal from "@/components/modals/assessment-view-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import type { Assessment } from "@shared/schema";
 
 export default function Assessments() {
   const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+  const [useEnhancedModal, setUseEnhancedModal] = useState(true);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedAssessment, setSelectedAssessment] = useState<Assessment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,10 +106,18 @@ export default function Assessments() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button onClick={() => setShowAssessmentModal(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Assessment
-              </Button>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => setUseEnhancedModal(!useEnhancedModal)}
+                >
+                  {useEnhancedModal ? 'Use Basic' : 'Use Enhanced'}
+                </Button>
+                <Button onClick={() => setShowAssessmentModal(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Assessment
+                </Button>
+              </div>
             </div>
             
             {/* Assessments Table */}
@@ -231,7 +241,16 @@ export default function Assessments() {
         </div>
       </main>
 
-      <AssessmentModal open={showAssessmentModal} onOpenChange={setShowAssessmentModal} />
+      {useEnhancedModal ? (
+        <EnhancedAssessmentModal 
+          isOpen={showAssessmentModal} 
+          onClose={() => setShowAssessmentModal(false)}
+          assessment={selectedAssessment}
+        />
+      ) : (
+        <AssessmentModal open={showAssessmentModal} onOpenChange={setShowAssessmentModal} />
+      )}
+      
       <AssessmentViewModal 
         open={showViewModal} 
         onOpenChange={setShowViewModal}

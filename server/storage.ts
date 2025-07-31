@@ -1,11 +1,11 @@
 import { 
   users, jobs, candidates, applications, interviewPanels, interviews, 
-  assessments, assessmentSubmissions, offerLetters,
+  assessments, assessmentSubmissions, offerLetters, questionBank,
   type User, type InsertUser, type Job, type InsertJob, 
   type Candidate, type InsertCandidate, type Application, type InsertApplication,
   type InterviewPanel, type InsertInterviewPanel, type Interview, type InsertInterview,
   type Assessment, type InsertAssessment, type AssessmentSubmission, type InsertAssessmentSubmission,
-  type OfferLetter, type InsertOfferLetter
+  type OfferLetter, type InsertOfferLetter, type QuestionBank, type InsertQuestionBank
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, count } from "drizzle-orm";
@@ -77,6 +77,18 @@ export interface IStorage {
   getOfferLetter(id: string): Promise<OfferLetter | undefined>;
   getOfferLetterByApplication(applicationId: string): Promise<OfferLetter | undefined>;
   updateOfferLetter(id: string, updates: Partial<InsertOfferLetter>): Promise<OfferLetter | undefined>;
+
+  // Question Bank
+  createQuestion(question: InsertQuestionBank): Promise<QuestionBank>;
+  getQuestions(): Promise<QuestionBank[]>;
+  getQuestion(id: string): Promise<QuestionBank | undefined>;
+  getQuestionsByCategory(category: string): Promise<QuestionBank[]>;
+  getQuestionsByCategoryAndDifficulty(category: string, difficulty: string): Promise<QuestionBank[]>;
+  updateQuestion(id: string, updates: Partial<InsertQuestionBank>): Promise<QuestionBank | undefined>;
+  deleteQuestion(id: string): Promise<boolean>;
+  bulkImportQuestions(questions: InsertQuestionBank[]): Promise<QuestionBank[]>;
+  getQuestionCategories(): Promise<string[]>;
+  generateAssessmentQuestions(categories: string[], difficulty: string[], count: number): Promise<QuestionBank[]>;
   
   // Dashboard stats
   getDashboardStats(): Promise<{
@@ -339,6 +351,77 @@ export class DatabaseStorage implements IStorage {
   async updateOfferLetter(id: string, updates: Partial<InsertOfferLetter>): Promise<OfferLetter | undefined> {
     const [offer] = await db.update(offerLetters).set(updates).where(eq(offerLetters.id, id)).returning();
     return offer || undefined;
+  }
+
+  // Question Bank
+  async createQuestion(question: InsertQuestionBank): Promise<QuestionBank> {
+    const [newQuestion] = await db.insert(questionBank).values(question).returning();
+    return newQuestion;
+  }
+
+  async getQuestions(): Promise<QuestionBank[]> {
+    return await db.select().from(questionBank).orderBy(desc(questionBank.createdAt));
+  }
+
+  async getQuestion(id: string): Promise<QuestionBank | undefined> {
+    const [question] = await db.select().from(questionBank).where(eq(questionBank.id, id));
+    return question || undefined;
+  }
+
+  async getQuestionsByCategory(category: string): Promise<QuestionBank[]> {
+    return await db.select().from(questionBank)
+      .where(eq(questionBank.category, category))
+      .orderBy(questionBank.difficulty, desc(questionBank.createdAt));
+  }
+
+  async getQuestionsByCategoryAndDifficulty(category: string, difficulty: string): Promise<QuestionBank[]> {
+    return await db.select().from(questionBank)
+      .where(and(eq(questionBank.category, category), eq(questionBank.difficulty, difficulty)))
+      .orderBy(desc(questionBank.createdAt));
+  }
+
+  async updateQuestion(id: string, updates: Partial<InsertQuestionBank>): Promise<QuestionBank | undefined> {
+    const [question] = await db.update(questionBank).set(updates).where(eq(questionBank.id, id)).returning();
+    return question || undefined;
+  }
+
+  async deleteQuestion(id: string): Promise<boolean> {
+    const result = await db.delete(questionBank).where(eq(questionBank.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async bulkImportQuestions(questions: InsertQuestionBank[]): Promise<QuestionBank[]> {
+    return await db.insert(questionBank).values(questions).returning();
+  }
+
+  async getQuestionCategories(): Promise<string[]> {
+    const categories = await db.select({ category: questionBank.category })
+      .from(questionBank)
+      .groupBy(questionBank.category)
+      .orderBy(questionBank.category);
+    return categories.map(c => c.category);
+  }
+
+  async generateAssessmentQuestions(categories: string[], difficulties: string[], count: number): Promise<QuestionBank[]> {
+    const questionsPerCategory = Math.ceil(count / categories.length);
+    const allQuestions: QuestionBank[] = [];
+    
+    for (const category of categories) {
+      const categoryQuestions = await db.select().from(questionBank)
+        .where(and(
+          eq(questionBank.category, category),
+          sql`${questionBank.difficulty} = ANY(${difficulties})`
+        ))
+        .orderBy(sql`RANDOM()`)
+        .limit(questionsPerCategory);
+      
+      allQuestions.push(...categoryQuestions);
+    }
+    
+    // Shuffle and limit to exact count
+    return allQuestions
+      .sort(() => Math.random() - 0.5)
+      .slice(0, count);
   }
 
   // Dashboard stats

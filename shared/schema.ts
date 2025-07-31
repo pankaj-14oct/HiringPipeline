@@ -75,14 +75,45 @@ export const interviews = pgTable("interviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Question Bank - centralized repository of questions
+export const questionBank = pgTable("question_bank", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  question: text("question").notNull(),
+  type: text("type").notNull().default("mcq"), // mcq, coding, essay
+  category: text("category").notNull(), // HTML, CSS, JavaScript, React, Node.js, etc.
+  difficulty: text("difficulty").notNull().default("medium"), // easy, medium, hard
+  options: jsonb("options").default([]), // for MCQ questions
+  correctAnswer: jsonb("correct_answer"), // answer or answers
+  explanation: text("explanation"), // explanation of correct answer
+  points: integer("points").default(1),
+  tags: jsonb("tags").default([]), // additional tags for filtering
+  createdBy: varchar("created_by").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const assessments = pgTable("assessments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // coding, mcq, assignment
+  type: text("type").notNull().default("auto"), // auto (from question bank), manual, hybrid
+  
+  // Question Bank Configuration
+  categories: jsonb("categories").default([]), // selected categories
+  difficulty: jsonb("difficulty").default(["easy", "medium", "hard"]), // allowed difficulties
+  questionCount: integer("question_count").default(20),
+  randomizeQuestions: boolean("randomize_questions").default(true),
+  shuffleOptions: boolean("shuffle_options").default(true),
+  
+  // Manual Questions (legacy support)
   questions: jsonb("questions").default([]),
-  timeLimit: integer("time_limit"), // minutes
+  
+  // Test Configuration
+  timeLimit: integer("time_limit").default(60), // minutes
   passingScore: integer("passing_score").default(70),
+  allowReview: boolean("allow_review").default(true),
+  showResults: boolean("show_results").default(true), // instant results
+  preventCheating: boolean("prevent_cheating").default(true), // full-screen mode
+  
   jobId: varchar("job_id"),
   createdBy: varchar("created_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -93,9 +124,20 @@ export const assessmentSubmissions = pgTable("assessment_submissions", {
   assessmentId: varchar("assessment_id").notNull(),
   candidateId: varchar("candidate_id").notNull(),
   applicationId: varchar("application_id").notNull(),
-  answers: jsonb("answers").default({}),
+  
+  // Enhanced submission tracking
+  selectedQuestions: jsonb("selected_questions").default([]), // questions assigned to this submission
+  answers: jsonb("answers").default({}), // candidate answers
   score: integer("score"),
-  status: text("status").notNull().default("pending"), // pending, submitted, graded
+  maxScore: integer("max_score"),
+  percentage: integer("percentage"),
+  
+  // Performance analytics
+  categoryScores: jsonb("category_scores").default({}), // score per category
+  timeSpent: integer("time_spent"), // total time in minutes
+  flagged: boolean("flagged").default(false), // flagged for review
+  
+  status: text("status").notNull().default("pending"), // pending, in_progress, submitted, graded
   startedAt: timestamp("started_at"),
   submittedAt: timestamp("submitted_at"),
   gradedAt: timestamp("graded_at"),
@@ -151,6 +193,10 @@ export const interviewsRelations = relations(interviews, ({ one }) => ({
   panel: one(interviewPanels, { fields: [interviews.panelId], references: [interviewPanels.id] }),
 }));
 
+export const questionBankRelations = relations(questionBank, ({ one }) => ({
+  creator: one(users, { fields: [questionBank.createdBy], references: [users.id] }),
+}));
+
 export const assessmentsRelations = relations(assessments, ({ one, many }) => ({
   job: one(jobs, { fields: [assessments.jobId], references: [jobs.id] }),
   creator: one(users, { fields: [assessments.createdBy], references: [users.id] }),
@@ -173,6 +219,7 @@ export const insertJobSchema = createInsertSchema(jobs).omit({ id: true, created
 export const insertCandidateSchema = createInsertSchema(candidates).omit({ id: true, createdAt: true });
 export const insertApplicationSchema = createInsertSchema(applications).omit({ id: true, appliedAt: true, updatedAt: true });
 export const insertInterviewPanelSchema = createInsertSchema(interviewPanels).omit({ id: true, createdAt: true });
+export const insertQuestionBankSchema = createInsertSchema(questionBank).omit({ id: true, createdAt: true });
 export const insertInterviewSchema = createInsertSchema(interviews).omit({ id: true, createdAt: true });
 export const insertAssessmentSchema = createInsertSchema(assessments).omit({ id: true, createdAt: true });
 export const insertAssessmentSubmissionSchema = createInsertSchema(assessmentSubmissions).omit({ id: true });
@@ -197,3 +244,5 @@ export type AssessmentSubmission = typeof assessmentSubmissions.$inferSelect;
 export type InsertAssessmentSubmission = z.infer<typeof insertAssessmentSubmissionSchema>;
 export type OfferLetter = typeof offerLetters.$inferSelect;
 export type InsertOfferLetter = z.infer<typeof insertOfferLetterSchema>;
+export type QuestionBank = typeof questionBank.$inferSelect;
+export type InsertQuestionBank = z.infer<typeof insertQuestionBankSchema>;

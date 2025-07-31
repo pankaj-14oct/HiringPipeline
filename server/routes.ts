@@ -3,15 +3,17 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, 
          insertInterviewPanelSchema, insertInterviewSchema, insertAssessmentSchema, 
-         insertAssessmentSubmissionSchema, insertOfferLetterSchema } from "@shared/schema";
+         insertAssessmentSubmissionSchema, insertOfferLetterSchema, insertQuestionBankSchema } from "@shared/schema";
 import { z } from "zod";
 import { seedDatabase } from "./seed-data";
+import { seedQuestionBank } from "./question-bank-seed";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database route
   app.post("/api/seed", async (req, res) => {
     try {
       await seedDatabase();
+      await seedQuestionBank();
       res.json({ message: "Database seeded successfully!" });
     } catch (error) {
       console.error("Error seeding database:", error);
@@ -319,6 +321,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching offer letters:", error);
       res.status(500).json({ message: "Failed to fetch offer letters" });
+    }
+  });
+
+  // Question Bank routes
+  app.post("/api/question-bank", async (req, res) => {
+    try {
+      const questionData = insertQuestionBankSchema.parse(req.body);
+      const question = await storage.createQuestion(questionData);
+      res.status(201).json(question);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid question data", errors: error.errors });
+      } else {
+        console.error("Error creating question:", error);
+        res.status(500).json({ message: "Failed to create question" });
+      }
+    }
+  });
+
+  app.get("/api/question-bank", async (req, res) => {
+    try {
+      const { category, difficulty } = req.query;
+      let questions;
+      
+      if (category && difficulty) {
+        questions = await storage.getQuestionsByCategoryAndDifficulty(category as string, difficulty as string);
+      } else if (category) {
+        questions = await storage.getQuestionsByCategory(category as string);
+      } else {
+        questions = await storage.getQuestions();
+      }
+      
+      res.json(questions);
+    } catch (error) {
+      console.error("Error fetching questions:", error);
+      res.status(500).json({ message: "Failed to fetch questions" });
+    }
+  });
+
+  app.get("/api/question-bank/categories", async (req, res) => {
+    try {
+      const categories = await storage.getQuestionCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/question-bank/bulk-import", async (req, res) => {
+    try {
+      const questions = z.array(insertQuestionBankSchema).parse(req.body);
+      const createdQuestions = await storage.bulkImportQuestions(questions);
+      res.status(201).json(createdQuestions);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid questions data", errors: error.errors });
+      } else {
+        console.error("Error bulk importing questions:", error);
+        res.status(500).json({ message: "Failed to bulk import questions" });
+      }
+    }
+  });
+
+  app.post("/api/question-bank/generate-assessment", async (req, res) => {
+    try {
+      const { categories, difficulty, count } = req.body;
+      const questions = await storage.generateAssessmentQuestions(
+        categories || [],
+        difficulty || ['easy', 'medium', 'hard'],
+        count || 20
+      );
+      res.json(questions);
+    } catch (error) {
+      console.error("Error generating assessment questions:", error);
+      res.status(500).json({ message: "Failed to generate assessment questions" });
+    }
+  });
+
+  app.put("/api/question-bank/:id", async (req, res) => {
+    try {
+      const updates = insertQuestionBankSchema.partial().parse(req.body);
+      const question = await storage.updateQuestion(req.params.id, updates);
+      if (!question) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      res.json(question);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid question data", errors: error.errors });
+      } else {
+        console.error("Error updating question:", error);
+        res.status(500).json({ message: "Failed to update question" });
+      }
+    }
+  });
+
+  app.delete("/api/question-bank/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteQuestion(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Question not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      res.status(500).json({ message: "Failed to delete question" });
     }
   });
 

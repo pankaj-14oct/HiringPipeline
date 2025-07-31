@@ -92,7 +92,6 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
         description: `Assessment ${assessment ? 'updated' : 'created'} successfully`,
       });
       onClose();
-      resetForm();
     },
     onError: () => {
       toast({
@@ -103,50 +102,50 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
     },
   });
 
-  // Initialize form with existing data
+  // Initialize form with existing data only once when modal opens
   useEffect(() => {
-    if (isOpen) {
-      if (assessment) {
-        setFormData({
-          title: assessment.title,
-          description: assessment.description || "",
-          type: assessment.type as string,
-          categories: Array.isArray(assessment.categories) ? assessment.categories : [],
-          difficulty: Array.isArray(assessment.difficulty) ? assessment.difficulty : ["easy", "medium", "hard"],
-          questionCount: assessment.questionCount || 20,
-          timeLimit: assessment.timeLimit || 60,
-          passingScore: assessment.passingScore || 70,
-          randomizeQuestions: assessment.randomizeQuestions ?? true,
-          shuffleOptions: assessment.shuffleOptions ?? true,
-          allowReview: assessment.allowReview ?? true,
-          showResults: assessment.showResults ?? true,
-          preventCheating: assessment.preventCheating ?? true,
-          jobId: assessment.jobId || "",
-          createdBy: assessment.createdBy
-        });
-      } else {
-        setFormData({
-          title: "",
-          description: "",
-          type: "auto",
-          categories: [],
-          difficulty: ["easy", "medium", "hard"],
-          questionCount: 20,
-          timeLimit: 60,
-          passingScore: 70,
-          randomizeQuestions: true,
-          shuffleOptions: true,
-          allowReview: true,
-          showResults: true,
-          preventCheating: true,
-          jobId: "",
-          createdBy: "user-1"
-        });
-        setPreviewQuestions([]);
-        setActiveTab("config");
-      }
+    if (isOpen && !formData.title && !assessment) {
+      // Only initialize if form is empty and no assessment is being edited
+      setFormData({
+        title: "",
+        description: "",
+        type: "auto",
+        categories: [],
+        difficulty: ["easy", "medium", "hard"],
+        questionCount: 20,
+        timeLimit: 60,
+        passingScore: 70,
+        randomizeQuestions: true,
+        shuffleOptions: true,
+        allowReview: true,
+        showResults: true,
+        preventCheating: true,
+        jobId: "",
+        createdBy: "user-1"
+      });
+      setPreviewQuestions([]);
+      setActiveTab("config");
+    } else if (isOpen && assessment && formData.title !== assessment.title) {
+      // Only update if we're editing a different assessment
+      setFormData({
+        title: assessment.title,
+        description: assessment.description || "",
+        type: assessment.type as string,
+        categories: Array.isArray(assessment.categories) ? assessment.categories : [],
+        difficulty: Array.isArray(assessment.difficulty) ? assessment.difficulty : ["easy", "medium", "hard"],
+        questionCount: assessment.questionCount || 20,
+        timeLimit: assessment.timeLimit || 60,
+        passingScore: assessment.passingScore || 70,
+        randomizeQuestions: assessment.randomizeQuestions ?? true,
+        shuffleOptions: assessment.shuffleOptions ?? true,
+        allowReview: assessment.allowReview ?? true,
+        showResults: assessment.showResults ?? true,
+        preventCheating: assessment.preventCheating ?? true,
+        jobId: assessment.jobId || "",
+        createdBy: assessment.createdBy
+      });
     }
-  }, [assessment, isOpen]);
+  }, [isOpen]);
 
 
 
@@ -156,21 +155,29 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
   };
 
   const handleCategoryToggle = (category: string) => {
-    setFormData(prev => ({
-      ...prev,
-      categories: prev.categories.includes(category)
+    setFormData(prev => {
+      const newCategories = prev.categories.includes(category)
         ? prev.categories.filter(c => c !== category)
-        : [...prev.categories, category]
-    }));
+        : [...prev.categories, category];
+      
+      return {
+        ...prev,
+        categories: newCategories
+      };
+    });
   };
 
   const handleDifficultyToggle = (difficulty: string) => {
-    setFormData(prev => ({
-      ...prev,
-      difficulty: prev.difficulty.includes(difficulty)
+    setFormData(prev => {
+      const newDifficulty = prev.difficulty.includes(difficulty)
         ? prev.difficulty.filter(d => d !== difficulty)
-        : [...prev.difficulty, difficulty]
-    }));
+        : [...prev.difficulty, difficulty];
+      
+      return {
+        ...prev,
+        difficulty: newDifficulty
+      };
+    });
   };
 
   const generatePreview = () => {

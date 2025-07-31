@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { X, Settings, BookOpen, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,9 +59,13 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("config");
-  const [formData, setFormData] = useState<FormData>(() => {
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [previewQuestions, setPreviewQuestions] = useState<QuestionBank[]>([]);
+
+  // Update form data when assessment prop changes
+  useEffect(() => {
     if (assessment) {
-      return {
+      setFormData({
         title: assessment.title,
         description: assessment.description || "",
         type: assessment.type as string,
@@ -77,11 +81,13 @@ export default function EnhancedAssessmentModal({ isOpen, onClose, assessment }:
         preventCheating: assessment.preventCheating ?? true,
         jobId: assessment.jobId || "",
         createdBy: assessment.createdBy
-      };
+      });
+    } else {
+      setFormData(initialFormData);
     }
-    return initialFormData;
-  });
-  const [previewQuestions, setPreviewQuestions] = useState<QuestionBank[]>([]);
+    // Reset preview when assessment changes
+    setPreviewQuestions([]);
+  }, [assessment]);
 
   // Fetch categories
   const { data: categories = [] } = useQuery<string[]>({

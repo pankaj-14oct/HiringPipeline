@@ -4,7 +4,7 @@ import { Search, Plus, FileText, Clock, Target, Users } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import AssessmentModal from "@/components/modals/assessment-modal";
-import EnhancedAssessmentModal from "@/components/modals/enhanced-assessment-modal";
+import EnhancedAssessmentModal from "@/components/modals/enhanced-assessment-modal-new";
 import AssessmentViewModal from "@/components/modals/assessment-view-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
